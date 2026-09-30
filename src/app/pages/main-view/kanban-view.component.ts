@@ -9,6 +9,7 @@ import { IColumn, ITask } from 'src/app/models/column.model';
 import { bootstrapApplication } from '@angular/platform-browser';
 
 @Component({
+  standalone: false,
   selector: 'app-kanban-view',
   templateUrl: './kanban-view.component.html',
   styleUrls: ['./kanban-view.component.scss']
