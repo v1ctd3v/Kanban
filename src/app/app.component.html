@@ -1,1 +1,106 @@
-<router-outlet></router-outlet>
+<div class="app" [class.sidebar-closed]="!sidebarOpen()">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo"><app-icon name="layout" [size]="18" /></span>
+      <span class="brand-name">Kanban</span>
+    </div>
+
+    <div class="side-section">
+      <span class="side-label">Boards</span>
+      <button class="icon-btn tiny" type="button" aria-label="New board" (click)="addingBoard.set(true)">
+        <app-icon name="plus" [size]="14" />
+      </button>
+    </div>
+
+    <nav class="board-list">
+      @for (b of store.boards(); track b.id) {
+        <div class="board-link" [class.active]="b.id === store.active().id">
+          <button type="button" class="board-link-main" (click)="navigate(b.id)">
+            <span class="emoji">{{ b.emoji }}</span>
+            <span class="board-link-name">{{ b.name }}</span>
+            <span class="pill">{{ cardCount(b.id) }}</span>
+          </button>
+          <button type="button" class="icon-btn tiny danger board-del" aria-label="Delete board" (click)="store.deleteBoard(b.id)">
+            <app-icon name="trash" [size]="13" />
+          </button>
+        </div>
+      }
+      @if (addingBoard()) {
+        <form class="board-new" (submit)="submitBoard(); $event.preventDefault()">
+          <input name="boardDraft" [(ngModel)]="boardDraft" maxlength="60" placeholder="Board name…" autofocus
+                 (keydown.escape)="addingBoard.set(false)" (blur)="boardDraft ? submitBoard() : addingBoard.set(false)" />
+        </form>
+      }
+    </nav>
+
+    <div class="side-foot">
+      <button class="side-btn" type="button" (click)="exportBoards()"><app-icon name="download" /> Export JSON</button>
+      <button class="side-btn" type="button" (click)="pickFile()"><app-icon name="upload" /> Import JSON</button>
+      <button class="side-btn" type="button" (click)="store.resetDemo()"><app-icon name="refresh" /> Load demo data</button>
+      <input #file type="file" accept="application/json,.json" hidden (change)="importFile($event)" />
+    </div>
+  </aside>
+  <div class="scrim" (click)="sidebarOpen.set(false)"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn" type="button" aria-label="Toggle sidebar" (click)="sidebarOpen.set(!sidebarOpen())">
+        <app-icon name="menu" />
+      </button>
+      <span class="board-emoji">{{ store.active().emoji }}</span>
+      <input class="board-title" #title [value]="store.active().name" [style.width.ch]="store.active().name.length + 3" maxlength="60" aria-label="Board name"
+             (keydown.enter)="title.blur()" (blur)="store.renameBoard(title.value); title.value = store.active().name" />
+
+      <div class="stats">
+        <div class="ring" [style.--p]="store.stats().percent" [title]="store.stats().percent + '% complete'">
+          <span>{{ store.stats().percent }}%</span>
+        </div>
+        <div class="stat"><b>{{ store.stats().total }}</b><span>cards</span></div>
+        <div class="stat"><b>{{ store.stats().done }}</b><span>done</span></div>
+        @if (store.stats().overdue) {
+          <div class="stat warn"><app-icon name="alert" [size]="14" /><b>{{ store.stats().overdue }}</b><span>overdue</span></div>
+        }
+      </div>
+
+      <span class="spacer"></span>
+
+      <div class="chips" role="group" aria-label="Filter by priority">
+        @for (p of priorities; track p) {
+          <button type="button" class="chip" [attr.data-priority]="p" [class.on]="store.priorityFilter() === p"
+                  (click)="togglePriority(p)">{{ p }}</button>
+        }
+      </div>
+
+      <label class="search">
+        <app-icon name="search" [size]="15" />
+        <input #search type="search" placeholder="Search  ( / )" [ngModel]="store.query()"
+               (ngModelChange)="store.query.set($event)" (keydown.escape)="search.blur()" />
+      </label>
+
+      <button class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" [disabled]="!store.undoDepth()"
+              (click)="store.undo()">
+        <app-icon name="undo" />
+      </button>
+      <button class="icon-btn" type="button" aria-label="Toggle theme" (click)="theme.toggle()">
+        <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+    </header>
+
+    <app-board />
+  </main>
+</div>
+
+@if (store.editing(); as ed) {
+  <app-card-dialog [card]="ed.card" [column]="ed.column" />
+}
+
+<div class="toasts" aria-live="polite">
+  @for (t of toasts.items(); track t.id) {
+    <div class="toast">
+      <span>{{ t.text }}</span>
+      @if (t.action) {
+        <button type="button" (click)="t.action(); toasts.dismiss(t.id)">{{ t.actionLabel }}</button>
+      }
+    </div>
+  }
+</div>
