@@ -1,0 +1,135 @@
+<div class="board" cdkDropList cdkDropListOrientation="horizontal"
+     [cdkDropListDisabled]="store.filtering()" (cdkDropListDropped)="dropColumn($event)">
+  <div class="lanes" cdkDropListGroup>
+    @for (lane of lanes(); track lane.column.id) {
+      <section class="column" cdkDrag cdkDragLockAxis="x" [style.--col]="lane.column.color">
+        <div class="column-drag-placeholder" *cdkDragPlaceholder></div>
+        <header class="column-head" cdkDragHandle>
+          <span class="dot"></span>
+          @if (renaming() === lane.column.id) {
+            <input class="rename" #r [value]="lane.column.name" maxlength="60" autofocus
+                   (click)="$event.stopPropagation()" (keydown.enter)="commitRename(lane.column, r.value)"
+                   (keydown.escape)="renaming.set(null)" (blur)="commitRename(lane.column, r.value)" />
+          } @else {
+            <h3 class="column-name" (dblclick)="renaming.set(lane.column.id)" title="Double-click to rename">
+              {{ lane.column.name }}
+            </h3>
+          }
+          <span class="count" [class.over]="lane.over"
+                [title]="lane.column.wip ? 'WIP limit ' + lane.column.wip : ''">
+            {{ lane.column.cards.length }}@if (lane.column.wip) {<span class="wip">/{{ lane.column.wip }}</span>}
+          </span>
+          <span class="spacer"></span>
+          <button class="icon-btn" type="button" aria-label="Column options" (click)="toggleMenu($event, lane.column.id)">
+            <app-icon name="more" />
+          </button>
+          @if (menuFor() === lane.column.id) {
+            <div class="menu" (click)="$event.stopPropagation()" (mousedown)="$event.stopPropagation()">
+              <button type="button" class="menu-item" (click)="renaming.set(lane.column.id); menuFor.set(null)">
+                <app-icon name="text" /> Rename
+              </button>
+              <div class="menu-row">
+                <span>WIP limit</span>
+                <span class="stepper">
+                  <button type="button" (click)="changeWip(lane.column, -1)" aria-label="Decrease">−</button>
+                  <b>{{ lane.column.wip ?? '∞' }}</b>
+                  <button type="button" (click)="changeWip(lane.column, 1)" aria-label="Increase">+</button>
+                </span>
+              </div>
+              <div class="swatches">
+                @for (c of colors; track c) {
+                  <button type="button" class="swatch" [class.on]="c === lane.column.color" [style.background]="c"
+                          [attr.aria-label]="'Color ' + c" (click)="store.updateColumn(lane.column.id, { color: c })"></button>
+                }
+              </div>
+              <button type="button" class="menu-item danger" (click)="store.deleteColumn(lane.column.id); menuFor.set(null)">
+                <app-icon name="trash" /> Delete column
+              </button>
+            </div>
+          }
+        </header>
+
+        <div class="cards" cdkDropList [cdkDropListData]="lane.column.id" [cdkDropListDisabled]="store.filtering()"
+             (cdkDropListDropped)="dropCard($event)">
+          @for (card of lane.cards; track card.id) {
+            <article class="card" cdkDrag [cdkDragData]="card" [attr.data-priority]="card.priority" tabindex="0"
+                     (click)="store.editingCardId.set(card.id)" (keydown.enter)="store.editingCardId.set(card.id)">
+              <div class="card-placeholder" *cdkDragPlaceholder></div>
+              @if (card.labels.length) {
+                <div class="labels">
+                  @for (l of card.labels; track l) {
+                    <span class="label" [style.--h]="hue(l)">{{ l }}</span>
+                  }
+                </div>
+              }
+              <div class="card-title">{{ card.title }}</div>
+              @if (card.description) {
+                <p class="card-desc">{{ card.description }}</p>
+              }
+              @if (card.checklist.length) {
+                <div class="progress" [title]="done(card) + ' of ' + card.checklist.length + ' done'">
+                  <span [style.width.%]="(done(card) / card.checklist.length) * 100"></span>
+                </div>
+              }
+              <footer class="card-meta">
+                <span class="prio" [attr.data-priority]="card.priority">{{ card.priority }}</span>
+                @if (card.checklist.length) {
+                  <span class="meta"><app-icon name="list" [size]="13" /> {{ done(card) }}/{{ card.checklist.length }}</span>
+                }
+                @if (card.due; as _d) {
+                  <span class="meta due" [attr.data-state]="due(card).state">
+                    <app-icon name="calendar" [size]="13" /> {{ due(card).text }}
+                  </span>
+                }
+                <span class="spacer"></span>
+                <button class="icon-btn tiny" type="button" aria-label="Duplicate card" title="Duplicate"
+                        (click)="$event.stopPropagation(); store.duplicateCard(card.id)">
+                  <app-icon name="copy" [size]="13" />
+                </button>
+                <button class="icon-btn tiny danger" type="button" aria-label="Delete card" title="Delete"
+                        (click)="$event.stopPropagation(); store.deleteCard(card.id)">
+                  <app-icon name="trash" [size]="13" />
+                </button>
+              </footer>
+            </article>
+          } @empty {
+            <div class="empty">{{ store.filtering() ? 'No matching cards' : 'Drop cards here' }}</div>
+          }
+        </div>
+
+        @if (addingTo() === lane.column.id) {
+          <form class="composer" (submit)="submitCard(lane.column.id, $event)">
+            <textarea name="draft" [(ngModel)]="draft" rows="2" maxlength="200" autofocus
+                      placeholder="What needs doing?" (keydown.enter)="submitCard(lane.column.id, $event)"
+                      (keydown.escape)="addingTo.set(null)"></textarea>
+            <div class="composer-actions">
+              <button class="btn primary sm" type="submit">Add card</button>
+              <button class="btn ghost sm" type="button" (click)="addingTo.set(null)">Done</button>
+            </div>
+          </form>
+        } @else {
+          <button class="add-card" type="button" (click)="startAdd(lane.column.id)">
+            <app-icon name="plus" /> Add card
+          </button>
+        }
+      </section>
+    }
+
+    <div class="column new-column">
+      @if (addingColumn()) {
+        <form class="composer" (submit)="submitColumn(); $event.preventDefault()">
+          <input name="columnDraft" [(ngModel)]="columnDraft" maxlength="60" autofocus placeholder="Column name"
+                 (keydown.escape)="addingColumn.set(false)" />
+          <div class="composer-actions">
+            <button class="btn primary sm" type="submit">Add column</button>
+            <button class="btn ghost sm" type="button" (click)="addingColumn.set(false)">Cancel</button>
+          </div>
+        </form>
+      } @else {
+        <button class="add-column" type="button" (click)="addingColumn.set(true)">
+          <app-icon name="plus" /> Add column
+        </button>
+      }
+    </div>
+  </div>
+</div>

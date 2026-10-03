@@ -1,35 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [
-        RouterTestingModule
-      ],
-      declarations: [
-        AppComponent
-      ],
-    }).compileComponents();
+  beforeEach(() => {
+    localStorage.clear();
+    return TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it(`should have as title 'Kanban'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('Kanban');
-  });
-
-  it('should render title', () => {
+  it('renders the active board with its columns and cards', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('Kanban app is running!');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.column:not(.new-column)').length).toBeGreaterThan(2);
+    expect(el.querySelectorAll('.card').length).toBeGreaterThan(0);
   });
 });
