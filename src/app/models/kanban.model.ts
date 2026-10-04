@@ -34,11 +34,20 @@ export interface Column {
   cards: Card[];
 }
 
+export interface ArchivedCard {
+  card: Card;
+  /** Where the card lived, so it can be restored there. */
+  columnId: string;
+  columnName: string;
+  archivedAt: number;
+}
+
 export interface Board {
   id: string;
   name: string;
   emoji: string;
   columns: Column[];
+  archive: ArchivedCard[];
   createdAt: number;
 }
 

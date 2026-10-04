@@ -1,8 +1,8 @@
-<div class="board" cdkDropList cdkDropListOrientation="horizontal"
+<div class="board" cdkScrollable cdkDropList cdkDropListOrientation="horizontal"
      [cdkDropListDisabled]="store.filtering()" (cdkDropListDropped)="dropColumn($event)">
   <div class="lanes" cdkDropListGroup>
     @for (lane of lanes(); track lane.column.id; let li = $index) {
-      <section class="column" cdkDrag cdkDragLockAxis="x" [style.--col]="lane.column.color">
+      <section class="column" cdkDrag cdkDragLockAxis="x" [cdkDragStartDelay]="dragDelay" [style.--col]="lane.column.color">
         <div class="column-drag-placeholder" *cdkDragPlaceholder></div>
         <header class="column-head" cdkDragHandle [attr.aria-label]="'Column ' + lane.column.name">
           <span class="dot"></span>
@@ -43,6 +43,11 @@
                           [attr.aria-label]="'Color ' + c" (click)="store.updateColumn(lane.column.id, { color: c })"></button>
                 }
               </div>
+              @if (lane.column.cards.length) {
+                <button type="button" class="menu-item" (click)="store.archiveColumn(lane.column.id); menuFor.set(null)">
+                  <app-icon name="archive" /> Archive all cards
+                </button>
+              }
               <button type="button" class="menu-item danger" (click)="store.deleteColumn(lane.column.id); menuFor.set(null)">
                 <app-icon name="trash" /> Delete column
               </button>
@@ -53,7 +58,7 @@
         <div class="cards" cdkDropList [cdkDropListData]="lane.column.id" [cdkDropListDisabled]="store.filtering()"
              (cdkDropListDropped)="dropCard($event)">
           @for (card of lane.cards; track card.id; let ci = $index) {
-            <article class="card" cdkDrag [cdkDragData]="card" [attr.data-priority]="card.priority" tabindex="0"
+            <article class="card" cdkDrag [cdkDragData]="card" [cdkDragStartDelay]="dragDelay" [attr.data-priority]="card.priority" tabindex="0"
                      [attr.data-card-id]="card.id" [attr.aria-label]="cardLabel(card, lane.column)"
                      aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight"
                      (click)="store.editingCardId.set(card.id)" (keydown)="onCardKey($event, li, ci, card)">
@@ -86,6 +91,10 @@
                 <button class="icon-btn tiny" type="button" aria-label="Duplicate card" title="Duplicate"
                         (click)="$event.stopPropagation(); store.duplicateCard(card.id)">
                   <app-icon name="copy" [size]="13" />
+                </button>
+                <button class="icon-btn tiny" type="button" aria-label="Archive card" title="Archive"
+                        (click)="$event.stopPropagation(); store.archiveCard(card.id)">
+                  <app-icon name="archive" [size]="13" />
                 </button>
                 <button class="icon-btn tiny danger" type="button" aria-label="Delete card" title="Delete"
                         (click)="$event.stopPropagation(); store.deleteCard(card.id)">
