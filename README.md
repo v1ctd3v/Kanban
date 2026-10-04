@@ -1,6 +1,6 @@
 # Kanban
 
-A fast, good-looking Kanban board built with Angular 21 (standalone components + signals) and the CDK drag-and-drop module. No UI framework: the design system lives in `src/styles.scss`.
+A fast, good-looking Kanban board built with Angular 21 (standalone components + signals) and the CDK drag-and-drop module. No UI framework: the design system lives in `src/styles.scss` — warm neutrals, hairline borders and a single accent, set in Instrument Serif, Geist and Geist Mono (self-hosted via Fontsource, so the app makes no third-party requests).
 
 ## Features
 
@@ -27,5 +27,5 @@ npm run test:watch
 
 - `.github/workflows/ci.yml` builds, tests and audits production dependencies on every PR and push to `master`.
 - `.github/workflows/deploy-pages.yml` publishes to GitHub Pages when run manually (one-time setup: Settings → Pages → Source: *GitHub Actions*).
-- The page ships with a strict Content-Security-Policy (`src/index.html`); production builds therefore keep font inlining off.
+- The page ships with a strict Content-Security-Policy (`src/index.html`): scripts, styles and fonts load only from the app's own origin. Production builds keep font inlining off because it injects an inline handler.
 - Dependabot groups Angular and test-tooling updates.

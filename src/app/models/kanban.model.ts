@@ -3,8 +3,8 @@ export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export const PRIORITIES: Priority[] = ['low', 'medium', 'high', 'urgent'];
 
 export const COLUMN_COLORS = [
-  '#60a5fa', '#fbbf24', '#34d399', '#f472b6',
-  '#a78bfa', '#f87171', '#22d3ee', '#94a3b8',
+  '#5b7bd5', '#c9962b', '#4f9a6d', '#c0607d',
+  '#8070c8', '#c4623a', '#3d9a9a', '#8b8d93',
 ];
 
 export interface ChecklistItem {

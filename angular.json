@@ -30,6 +30,9 @@
               "src/assets"
             ],
             "styles": [
+              "@fontsource-variable/geist/wght.css",
+              "@fontsource-variable/geist-mono/wght.css",
+              "@fontsource/instrument-serif/latin-400.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -95,6 +98,9 @@
               "src/assets"
             ],
             "styles": [
+              "@fontsource-variable/geist/wght.css",
+              "@fontsource-variable/geist-mono/wght.css",
+              "@fontsource/instrument-serif/latin-400.css",
               "src/styles.scss"
             ],
             "scripts": []
