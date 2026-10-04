@@ -1,5 +1,5 @@
-<div class="app" [class.sidebar-closed]="!sidebarOpen()">
-  <aside class="sidebar">
+<div class="app" [class.sidebar-closed]="!sidebarOpen()" [attr.inert]="store.editing() ? '' : null">
+  <aside class="sidebar" aria-label="Sidebar">
     <div class="brand">
       <span class="logo"><app-icon name="layout" [size]="18" /></span>
       <span class="brand-name">Kanban</span>
@@ -12,10 +12,10 @@
       </button>
     </div>
 
-    <nav class="board-list">
+    <nav class="board-list" aria-label="Boards">
       @for (b of store.boards(); track b.id) {
         <div class="board-link" [class.active]="b.id === store.active().id">
-          <button type="button" class="board-link-main" (click)="navigate(b.id)">
+          <button type="button" class="board-link-main" [attr.aria-current]="b.id === store.active().id ? 'page' : null" (click)="navigate(b.id)">
             <span class="emoji">{{ b.emoji }}</span>
             <span class="board-link-name">{{ b.name }}</span>
             <span class="pill">{{ cardCount(b.id) }}</span>
@@ -43,6 +43,7 @@
   <div class="scrim" (click)="sidebarOpen.set(false)"></div>
 
   <main class="main">
+    <h1 class="sr-only">{{ store.active().name }} board</h1>
     <header class="topbar">
       <button class="icon-btn" type="button" aria-label="Toggle sidebar" (click)="sidebarOpen.set(!sidebarOpen())">
         <app-icon name="menu" />
@@ -67,13 +68,14 @@
       <div class="chips" role="group" aria-label="Filter by priority">
         @for (p of priorities; track p) {
           <button type="button" class="chip" [attr.data-priority]="p" [class.on]="store.priorityFilter() === p"
+                  [attr.aria-pressed]="store.priorityFilter() === p"
                   (click)="togglePriority(p)">{{ p }}</button>
         }
       </div>
 
       <label class="search">
         <app-icon name="search" [size]="15" />
-        <input #search type="search" placeholder="Search  ( / )" [ngModel]="store.query()"
+        <input #search type="search" aria-label="Search cards" placeholder="Search  ( / )" [ngModel]="store.query()"
                (ngModelChange)="store.query.set($event)" (keydown.escape)="search.blur()" />
       </label>
 
@@ -93,6 +95,8 @@
 @if (store.editing(); as ed) {
   <app-card-dialog [card]="ed.card" [column]="ed.column" />
 }
+
+<div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ toasts.announcement() }}</div>
 
 <div class="toasts" aria-live="polite">
   @for (t of toasts.items(); track t.id) {
