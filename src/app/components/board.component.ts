@@ -16,6 +16,8 @@ export class BoardComponent {
   readonly store = inject(BoardStore);
   private readonly toasts = inject(ToastService);
   readonly colors = COLUMN_COLORS;
+  /** On touch screens a short press-and-hold starts a drag, so swiping still scrolls. */
+  readonly dragDelay = { touch: 220, mouse: 0 };
 
   readonly addingTo = signal<string | null>(null);
   readonly menuFor = signal<string | null>(null);

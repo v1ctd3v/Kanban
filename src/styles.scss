@@ -124,7 +124,7 @@ kbd { font: 500 10.5px/1 var(--font-mono); color: var(--faint); border: 1px soli
 }
 
 /* ───────── App shell ───────── */
-.app { display: flex; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 
 .sidebar {
   width: 240px; flex: none; display: flex; flex-direction: column; gap: 4px;
@@ -221,6 +221,7 @@ kbd { font: 500 10.5px/1 var(--font-mono); color: var(--faint); border: 1px soli
   --col: var(--faint);
   position: relative; width: 284px; flex: none; display: flex; flex-direction: column;
   max-height: calc(100vh - 210px);
+  max-height: calc(100dvh - 210px);
 }
 .column-head {
   display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 2px; margin-bottom: 10px;
@@ -364,7 +365,22 @@ kbd { font: 500 10.5px/1 var(--font-mono); color: var(--faint); border: 1px soli
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
-@media (max-width: 1100px) {
+/* Touch: no hover to reveal actions, bigger targets, no iOS zoom on focus */
+@media (hover: none) {
+  .card-meta .icon-btn, .column-head .icon-btn, .board-link .board-del { opacity: 1; }
+}
+@media (pointer: coarse) {
+  .icon-btn { width: 40px; height: 40px; }
+  .icon-btn.tiny { width: 34px; height: 34px; }
+  input, textarea, select { font-size: 16px; }
+  .card { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+  .chip { height: 36px; }
+  .add-card, .add-column, .menu-item, .side-btn, .board-link-main { min-height: 40px; }
+  .stepper button { width: 32px; height: 32px; }
+  .swatch { width: 26px; height: 26px; }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
   .chip { padding: 0 8px; font-size: 0; gap: 0; }
   .chip .prio { margin: 0; }
 }
@@ -382,3 +398,26 @@ kbd { font: 500 10.5px/1 var(--font-mono); color: var(--faint); border: 1px soli
   .dialog-body { grid-template-columns: 1fr; }
   .dialog-side { border-left: 0; border-top: 1px solid var(--line); }
 }
+
+/* Phones: one column per screen with snap scrolling; the editor becomes a bottom sheet */
+@media (max-width: 640px) {
+  .crumbs { display: none; }
+  .search { flex: 1; width: auto; max-width: 220px; }
+  .board-header { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 16px 14px; }
+  .board-title { font-size: 30px; }
+  .board { scroll-snap-type: x mandatory; scroll-padding-inline: 16px; }
+  .lanes { gap: 12px; padding-right: 16px; }
+  .column, .new-column { width: calc(100vw - 52px); scroll-snap-align: start; }
+  .column { max-height: calc(100dvh - 250px); }
+  .backdrop { padding: 0; place-items: end stretch; }
+  .dialog { width: 100%; max-height: 94dvh; border-radius: 14px 14px 0 0; border-bottom: 0; animation: sheet 0.24s var(--ease); }
+  .dialog-head { padding: 18px 10px 4px 18px; }
+  .dialog-title { font-size: 26px; }
+  .dialog-main { padding: 10px 18px 20px; }
+  .dialog-side { padding: 16px 18px 20px; }
+  .dialog-foot { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+  .hint { display: none; }
+  .toasts { left: 12px; right: 12px; transform: none; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .toast { width: 100%; justify-content: space-between; }
+}
+@keyframes sheet { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }

@@ -1,8 +1,8 @@
-<div class="board" cdkDropList cdkDropListOrientation="horizontal"
+<div class="board" cdkScrollable cdkDropList cdkDropListOrientation="horizontal"
      [cdkDropListDisabled]="store.filtering()" (cdkDropListDropped)="dropColumn($event)">
   <div class="lanes" cdkDropListGroup>
     @for (lane of lanes(); track lane.column.id; let li = $index) {
-      <section class="column" cdkDrag cdkDragLockAxis="x" [style.--col]="lane.column.color">
+      <section class="column" cdkDrag cdkDragLockAxis="x" [cdkDragStartDelay]="dragDelay" [style.--col]="lane.column.color">
         <div class="column-drag-placeholder" *cdkDragPlaceholder></div>
         <header class="column-head" cdkDragHandle [attr.aria-label]="'Column ' + lane.column.name">
           <span class="dot"></span>
@@ -53,7 +53,7 @@
         <div class="cards" cdkDropList [cdkDropListData]="lane.column.id" [cdkDropListDisabled]="store.filtering()"
              (cdkDropListDropped)="dropCard($event)">
           @for (card of lane.cards; track card.id; let ci = $index) {
-            <article class="card" cdkDrag [cdkDragData]="card" [attr.data-priority]="card.priority" tabindex="0"
+            <article class="card" cdkDrag [cdkDragData]="card" [cdkDragStartDelay]="dragDelay" [attr.data-priority]="card.priority" tabindex="0"
                      [attr.data-card-id]="card.id" [attr.aria-label]="cardLabel(card, lane.column)"
                      aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight"
                      (click)="store.editingCardId.set(card.id)" (keydown)="onCardKey($event, li, ci, card)">
