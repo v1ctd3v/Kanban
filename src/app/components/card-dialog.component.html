@@ -59,8 +59,9 @@
             <span class="field-label">Priority</span>
             <div class="segmented">
               @for (p of priorities; track p) {
-                <button type="button" [attr.data-priority]="p" [class.on]="d.priority === p" (click)="patch({ priority: p })">
-                  {{ p }}
+                <button type="button" [attr.data-priority]="p" [class.on]="d.priority === p" [attr.aria-pressed]="d.priority === p"
+                        (click)="patch({ priority: p })">
+                  <span class="prio" [attr.data-priority]="p" aria-hidden="true"><i></i><i></i><i></i></span>{{ p }}
                 </button>
               }
             </div>

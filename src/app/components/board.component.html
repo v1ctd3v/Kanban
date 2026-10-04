@@ -69,19 +69,17 @@
               @if (card.description) {
                 <p class="card-desc">{{ card.description }}</p>
               }
-              @if (card.checklist.length) {
-                <div class="progress" [title]="done(card) + ' of ' + card.checklist.length + ' done'">
-                  <span [style.width.%]="(done(card) / card.checklist.length) * 100"></span>
-                </div>
-              }
               <footer class="card-meta">
-                <span class="prio" [attr.data-priority]="card.priority">{{ card.priority }}</span>
+                <span class="prio" [attr.data-priority]="card.priority" [title]="card.priority + ' priority'" aria-hidden="true"><i></i><i></i><i></i></span>
                 @if (card.checklist.length) {
-                  <span class="meta"><app-icon name="list" [size]="13" /> {{ done(card) }}/{{ card.checklist.length }}</span>
+                  <span class="meta" [title]="done(card) + ' of ' + card.checklist.length + ' done'">
+                    <span class="mini-meter" aria-hidden="true"><span [style.width.%]="(done(card) / card.checklist.length) * 100"></span></span>
+                    {{ done(card) }}/{{ card.checklist.length }}
+                  </span>
                 }
                 @if (card.due; as _d) {
                   <span class="meta due" [attr.data-state]="due(card).state">
-                    <app-icon name="calendar" [size]="13" /> {{ due(card).text }}
+                    <app-icon name="calendar" [size]="12" /> {{ due(card).text }}
                   </span>
                 }
                 <span class="spacer"></span>

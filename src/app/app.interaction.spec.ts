@@ -138,7 +138,7 @@ describe('Board interactions', () => {
       qa('.swatch')[3].click();
       await settle();
       expect(columns()[0].color).toBe(store.active().columns[0].color);
-      expect(columns()[0].color).toBe('#f472b6');
+      expect(columns()[0].color).toBe('#c0607d');
     });
 
     it('deletes a column and can undo it', async () => {

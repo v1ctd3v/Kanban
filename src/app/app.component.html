@@ -1,8 +1,8 @@
 <div class="app" [class.sidebar-closed]="!sidebarOpen()" [attr.inert]="store.editing() ? '' : null">
   <aside class="sidebar" aria-label="Sidebar">
     <div class="brand">
-      <span class="logo"><app-icon name="layout" [size]="18" /></span>
       <span class="brand-name">Kanban</span>
+      <span class="brand-mark" aria-hidden="true"></span>
     </div>
 
     <div class="side-section">
@@ -16,7 +16,7 @@
       @for (b of store.boards(); track b.id) {
         <div class="board-link" [class.active]="b.id === store.active().id">
           <button type="button" class="board-link-main" [attr.aria-current]="b.id === store.active().id ? 'page' : null" (click)="navigate(b.id)">
-            <span class="emoji">{{ b.emoji }}</span>
+            <span class="mono-tile" aria-hidden="true">{{ b.name.charAt(0) }}</span>
             <span class="board-link-name">{{ b.name }}</span>
             <span class="pill">{{ cardCount(b.id) }}</span>
           </button>
@@ -48,35 +48,15 @@
       <button class="icon-btn" type="button" aria-label="Toggle sidebar" (click)="sidebarOpen.set(!sidebarOpen())">
         <app-icon name="menu" />
       </button>
-      <span class="board-emoji">{{ store.active().emoji }}</span>
-      <input class="board-title" #title [value]="store.active().name" [style.width.ch]="store.active().name.length + 3" maxlength="60" aria-label="Board name"
-             (keydown.enter)="title.blur()" (blur)="store.renameBoard(title.value); title.value = store.active().name" />
-
-      <div class="stats">
-        <div class="ring" [style.--p]="store.stats().percent" [title]="store.stats().percent + '% complete'">
-          <span>{{ store.stats().percent }}%</span>
-        </div>
-        <div class="stat"><b>{{ store.stats().total }}</b><span>cards</span></div>
-        <div class="stat"><b>{{ store.stats().done }}</b><span>done</span></div>
-        @if (store.stats().overdue) {
-          <div class="stat warn"><app-icon name="alert" [size]="14" /><b>{{ store.stats().overdue }}</b><span>overdue</span></div>
-        }
-      </div>
+      <span class="crumbs" aria-hidden="true">Boards <span class="crumb-sep">/</span> <b>{{ store.active().name }}</b></span>
 
       <span class="spacer"></span>
 
-      <div class="chips" role="group" aria-label="Filter by priority">
-        @for (p of priorities; track p) {
-          <button type="button" class="chip" [attr.data-priority]="p" [class.on]="store.priorityFilter() === p"
-                  [attr.aria-pressed]="store.priorityFilter() === p"
-                  (click)="togglePriority(p)">{{ p }}</button>
-        }
-      </div>
-
       <label class="search">
-        <app-icon name="search" [size]="15" />
-        <input #search type="search" aria-label="Search cards" placeholder="Search  ( / )" [ngModel]="store.query()"
+        <app-icon name="search" [size]="14" />
+        <input #search type="search" aria-label="Search cards" placeholder="Search" [ngModel]="store.query()"
                (ngModelChange)="store.query.set($event)" (keydown.escape)="search.blur()" />
+        <kbd>/</kbd>
       </label>
 
       <button class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" [disabled]="!store.undoDepth()"
@@ -87,6 +67,28 @@
         <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
       </button>
     </header>
+
+    <section class="board-header">
+      <div class="board-heading">
+        <input class="board-title" #title [value]="store.active().name" [style.width.ch]="store.active().name.length + 2" maxlength="60" aria-label="Board name"
+               (keydown.enter)="title.blur()" (blur)="store.renameBoard(title.value); title.value = store.active().name" />
+        <p class="board-meta">
+          <span><b>{{ store.stats().done }}</b> of {{ store.stats().total }} done</span>
+          <span class="meter" [title]="store.stats().percent + '% complete'" aria-hidden="true"><span [style.width.%]="store.stats().percent"></span></span>
+          @if (store.stats().overdue) {
+            <span class="overdue">{{ store.stats().overdue }} overdue</span>
+          }
+        </p>
+      </div>
+
+      <div class="chips" role="group" aria-label="Filter by priority">
+        @for (p of priorities; track p) {
+          <button type="button" class="chip" [attr.data-priority]="p" [class.on]="store.priorityFilter() === p"
+                  [attr.aria-pressed]="store.priorityFilter() === p"
+                  (click)="togglePriority(p)"><span class="prio" [attr.data-priority]="p" aria-hidden="true"><i></i><i></i><i></i></span>{{ p }}</button>
+        }
+      </div>
+    </section>
 
     <app-board />
   </main>
