@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnInit, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Card, Column, labelHue, PRIORITIES, uid } from '../models/kanban.model';
 import { BoardStore } from '../services/board.store';
@@ -10,7 +10,9 @@ import { IconComponent } from './icon.component';
   imports: [FormsModule, IconComponent],
   templateUrl: './card-dialog.component.html',
 })
-export class CardDialogComponent implements OnInit {
+export class CardDialogComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly opener = document.activeElement as HTMLElement | null;
   readonly store = inject(BoardStore);
   readonly card = input.required<Card>();
   readonly column = input.required<Column>();
@@ -31,6 +33,19 @@ export class CardDialogComponent implements OnInit {
   ngOnInit(): void {
     this.draft.set(structuredClone(this.card()));
     this.columnId.set(this.column().id);
+  }
+
+  ngAfterViewInit(): void {
+    this.host.nativeElement.querySelector<HTMLElement>('.dialog-title')?.focus();
+  }
+
+  ngOnDestroy(): void {
+    const id = this.card().id;
+    // Return focus to the card that opened the editor (it may have re-rendered after a move).
+    setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-card-id="${id}"]`) ?? this.opener;
+      target?.focus?.();
+    });
   }
 
   patch(p: Partial<Card>): void {
@@ -87,5 +102,28 @@ export class CardDialogComponent implements OnInit {
   onKey(e: KeyboardEvent): void {
     if (e.key === 'Escape') this.close();
     else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this.save();
+    else if (e.key === 'Tab') this.trapFocus(e);
+  }
+
+  private trapFocus(e: KeyboardEvent): void {
+    const dialog = this.host.nativeElement.querySelector<HTMLElement>('.dialog');
+    if (!dialog) return;
+    const items = Array.from(
+      dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])'),
+    ).filter((el) => el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (!dialog.contains(active)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 }

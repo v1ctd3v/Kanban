@@ -1,7 +1,8 @@
 @if (draft(); as d) {
   <div class="backdrop" (mousedown)="close()">
-    <div class="dialog" role="dialog" aria-modal="true" aria-label="Edit card" (mousedown)="$event.stopPropagation()">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-heading" (mousedown)="$event.stopPropagation()">
       <header class="dialog-head">
+        <h2 id="dialog-heading" class="sr-only">Edit card</h2>
         <input class="dialog-title" [ngModel]="d.title" (ngModelChange)="patch({ title: $event })" maxlength="200"
                placeholder="Card title" aria-label="Title" />
         <button class="icon-btn" type="button" aria-label="Close" (click)="close()"><app-icon name="x" /></button>
@@ -44,10 +45,10 @@
           </div>
         </div>
 
-        <aside class="dialog-side">
+        <aside class="dialog-side" aria-label="Card details">
           <div class="field">
             <span class="field-label">Status</span>
-            <select [ngModel]="columnId()" (ngModelChange)="columnId.set($event)">
+            <select aria-label="Status" [ngModel]="columnId()" (ngModelChange)="columnId.set($event)">
               @for (c of store.active().columns; track c.id) {
                 <option [value]="c.id">{{ c.name }}</option>
               }

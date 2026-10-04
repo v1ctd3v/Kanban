@@ -1,26 +1,27 @@
 <div class="board" cdkDropList cdkDropListOrientation="horizontal"
      [cdkDropListDisabled]="store.filtering()" (cdkDropListDropped)="dropColumn($event)">
   <div class="lanes" cdkDropListGroup>
-    @for (lane of lanes(); track lane.column.id) {
+    @for (lane of lanes(); track lane.column.id; let li = $index) {
       <section class="column" cdkDrag cdkDragLockAxis="x" [style.--col]="lane.column.color">
         <div class="column-drag-placeholder" *cdkDragPlaceholder></div>
-        <header class="column-head" cdkDragHandle>
+        <header class="column-head" cdkDragHandle [attr.aria-label]="'Column ' + lane.column.name">
           <span class="dot"></span>
           @if (renaming() === lane.column.id) {
             <input class="rename" #r [value]="lane.column.name" maxlength="60" autofocus
                    (click)="$event.stopPropagation()" (keydown.enter)="commitRename(lane.column, r.value)"
                    (keydown.escape)="renaming.set(null)" (blur)="commitRename(lane.column, r.value)" />
           } @else {
-            <h3 class="column-name" (dblclick)="renaming.set(lane.column.id)" title="Double-click to rename">
+            <h2 class="column-name" (dblclick)="renaming.set(lane.column.id)" title="Double-click to rename">
               {{ lane.column.name }}
-            </h3>
+            </h2>
           }
           <span class="count" [class.over]="lane.over"
                 [title]="lane.column.wip ? 'WIP limit ' + lane.column.wip : ''">
             {{ lane.column.cards.length }}@if (lane.column.wip) {<span class="wip">/{{ lane.column.wip }}</span>}
           </span>
           <span class="spacer"></span>
-          <button class="icon-btn" type="button" aria-label="Column options" (click)="toggleMenu($event, lane.column.id)">
+          <button class="icon-btn" type="button" aria-label="Column options" aria-haspopup="true"
+                  [attr.aria-expanded]="menuFor() === lane.column.id" (click)="toggleMenu($event, lane.column.id)">
             <app-icon name="more" />
           </button>
           @if (menuFor() === lane.column.id) {
@@ -51,9 +52,11 @@
 
         <div class="cards" cdkDropList [cdkDropListData]="lane.column.id" [cdkDropListDisabled]="store.filtering()"
              (cdkDropListDropped)="dropCard($event)">
-          @for (card of lane.cards; track card.id) {
+          @for (card of lane.cards; track card.id; let ci = $index) {
             <article class="card" cdkDrag [cdkDragData]="card" [attr.data-priority]="card.priority" tabindex="0"
-                     (click)="store.editingCardId.set(card.id)" (keydown.enter)="store.editingCardId.set(card.id)">
+                     [attr.data-card-id]="card.id" [attr.aria-label]="cardLabel(card, lane.column)"
+                     aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight"
+                     (click)="store.editingCardId.set(card.id)" (keydown)="onCardKey($event, li, ci, card)">
               <div class="card-placeholder" *cdkDragPlaceholder></div>
               @if (card.labels.length) {
                 <div class="labels">
@@ -93,7 +96,7 @@
               </footer>
             </article>
           } @empty {
-            <div class="empty">{{ store.filtering() ? 'No matching cards' : 'Drop cards here' }}</div>
+            <div class="empty" role="note">{{ store.filtering() ? 'No matching cards' : 'Drop cards here' }}</div>
           }
         </div>
 
