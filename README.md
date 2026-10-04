@@ -18,5 +18,13 @@ A fast, good-looking Kanban board built with Angular 21 (standalone components +
 npm install
 npm start      # http://localhost:4200
 npm run build
-npm test
+npm test       # headless Chrome, single run
+npm run test:watch
 ```
+
+## CI and deployment
+
+- `.github/workflows/ci.yml` builds, tests and audits production dependencies on every PR and push to `master`.
+- `.github/workflows/deploy-pages.yml` publishes to GitHub Pages when run manually (one-time setup: Settings → Pages → Source: *GitHub Actions*).
+- The page ships with a strict Content-Security-Policy (`src/index.html`); production builds therefore keep font inlining off.
+- Dependabot groups Angular and test-tooling updates.

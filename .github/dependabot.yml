@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      angular:
+        patterns: ["@angular/*", "@angular-devkit/*", "typescript", "zone.js", "rxjs", "tslib"]
+      testing:
+        patterns: ["karma*", "jasmine*", "@types/jasmine"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
