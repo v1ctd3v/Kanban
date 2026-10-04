@@ -240,4 +240,88 @@ describe('Board interactions', () => {
       expect(columns().at(-1)!.cards.length).toBe(0);
     });
   });
+
+  describe('command palette', () => {
+    const openPalette = async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, cancelable: true }));
+      await settle();
+    };
+    const input = () => q<HTMLInputElement>('.palette-input input');
+    const typeQuery = async (text: string) => {
+      input().value = text;
+      input().dispatchEvent(new Event('input'));
+      await settle();
+    };
+    const key = async (k: string) => {
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: k, cancelable: true }));
+      await settle();
+    };
+
+    it('opens with Ctrl+K, focuses the input, and closes with Escape', async () => {
+      await openPalette();
+      expect(q('.palette')).toBeTruthy();
+      expect(document.activeElement).toBe(input());
+      expect(q('.app').hasAttribute('inert')).toBeTrue();
+      await key('Escape');
+      expect(q('.palette')).toBeNull();
+    });
+
+    it('shows actions and boards, but cards only after typing', async () => {
+      await openPalette();
+      const groups = () => qa('.palette-group').map((g) => g.textContent!.trim());
+      expect(groups()).toEqual(['Actions', 'Boards']);
+      await typeQuery('onboarding');
+      expect(groups()).toEqual(['Cards']);
+      expect(q('.palette-option').textContent).toContain('Write onboarding emails');
+    });
+
+    it('moves the active option with the arrow keys', async () => {
+      await openPalette();
+      expect(input().getAttribute('aria-activedescendant')).toBe('palette-opt-0');
+      await key('ArrowDown');
+      expect(input().getAttribute('aria-activedescendant')).toBe('palette-opt-1');
+      await key('ArrowUp');
+      await key('ArrowUp');
+      expect(input().getAttribute('aria-activedescendant')).toBe(`palette-opt-${qa('.palette-option').length - 1}`);
+    });
+
+    it('switches boards', async () => {
+      await openPalette();
+      await typeQuery('personal');
+      await key('Enter');
+      expect(q('.palette')).toBeNull();
+      expect(store.active().name).toBe('Personal');
+    });
+
+    it('opens a card on another board', async () => {
+      await openPalette();
+      await typeQuery('sourdough');
+      await key('Enter');
+      expect(store.active().name).toBe('Personal');
+      expect(q('.dialog')).toBeTruthy();
+      expect(q<HTMLInputElement>('.dialog-title').value).toBe('Learn to bake sourdough');
+    });
+
+    it('creates a new card and opens it in the editor', async () => {
+      const before = columns()[0].cards.length;
+      await openPalette();
+      await typeQuery('new card');
+      await key('Enter');
+      expect(columns()[0].cards.length).toBe(before + 1);
+      expect(q('.dialog')).toBeTruthy();
+    });
+
+    it('does not list every card when the query is a board name', async () => {
+      await openPalette();
+      await typeQuery('launch');
+      const cards = qa('.palette-option').filter((o) => o.textContent!.includes('Product Launch ·'));
+      expect(cards.map((o) => o.querySelector('.palette-label')!.textContent)).toEqual(['Ship the public launch page']);
+    });
+
+    it('says when nothing matches', async () => {
+      await openPalette();
+      await typeQuery('zzzz');
+      expect(q('.palette-empty')).toBeTruthy();
+    });
+  });
 });

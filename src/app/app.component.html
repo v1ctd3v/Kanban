@@ -59,6 +59,9 @@
         <kbd>/</kbd>
       </label>
 
+      <button class="cmdk-btn" type="button" aria-label="Command menu" aria-keyshortcuts="Control+K Meta+K" (click)="store.paletteOpen.set(true)">
+        <kbd>{{ modKey }}</kbd><kbd>K</kbd>
+      </button>
       <button class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" [disabled]="!store.undoDepth()"
               (click)="store.undo()">
         <app-icon name="undo" />
@@ -106,6 +109,10 @@
 
 @if (store.archiveOpen()) {
   <app-archive-panel />
+}
+
+@if (store.paletteOpen()) {
+  <app-command-palette (exportRequested)="exportBoards()" />
 }
 
 <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ toasts.announcement() }}</div>

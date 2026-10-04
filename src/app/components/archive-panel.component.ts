@@ -8,7 +8,7 @@ import { IconComponent } from './icon.component';
   imports: [IconComponent],
   template: `
     <div class="backdrop drawer-backdrop" (mousedown)="close()">
-      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="archive-heading" (mousedown)="$event.stopPropagation()">
+      <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="archive-heading" (mousedown)="$event.stopPropagation()">
         <header class="drawer-head">
           <div>
             <h2 id="archive-heading" class="drawer-title">Archive</h2>
@@ -33,7 +33,7 @@ import { IconComponent } from './icon.component';
         } @else {
           <p class="drawer-empty">Nothing archived yet. Archive finished cards from a card's menu, or clear a whole column from its options.</p>
         }
-      </aside>
+      </div>
     </div>
   `,
 })

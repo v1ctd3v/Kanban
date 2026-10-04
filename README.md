@@ -8,7 +8,9 @@ A fast, good-looking Kanban board built with Angular 21 (standalone components +
 - Drag and drop for cards and columns
 - Card editor with description, priority, labels, due date and a checklist with progress
 - WIP limits per column, board progress meter, overdue counter
+- Command palette (`⌘K` / `Ctrl+K`): jump to any board or card, create cards and boards, switch theme, export
 - Search (`/`), priority filters, dark/light theme
+- Works on phones: press-and-hold to drag, one column per screen, card editor as a bottom sheet
 - Keyboard friendly: `Enter` opens a card, `Alt`+arrow keys move it between and within columns (announced to screen readers), `/` focuses search
 - Archive finished cards (one at a time, or a whole column at once) and restore them from the archive panel
 - Undo for every change (`Ctrl/⌘+Z`, or the toast button)

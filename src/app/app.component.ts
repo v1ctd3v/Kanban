@@ -4,15 +4,17 @@ import { PRIORITIES } from './models/kanban.model';
 import { BoardComponent } from './components/board.component';
 import { ArchivePanelComponent } from './components/archive-panel.component';
 import { CardDialogComponent } from './components/card-dialog.component';
+import { CommandPaletteComponent } from './components/command-palette.component';
 import { IconComponent } from './components/icon.component';
 import { BoardStore } from './services/board.store';
+import { downloadText } from './services/download';
 import { ThemeService } from './services/theme.service';
 import { ToastService } from './services/toast.service';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BoardComponent, CardDialogComponent, ArchivePanelComponent, IconComponent],
+  imports: [FormsModule, BoardComponent, CardDialogComponent, ArchivePanelComponent, CommandPaletteComponent, IconComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent {
@@ -22,6 +24,7 @@ export class AppComponent {
   readonly toasts = inject(ToastService);
 
   readonly priorities = PRIORITIES;
+  readonly modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
   readonly sidebarOpen = signal(window.innerWidth > 900);
   readonly addingBoard = signal(false);
   /** Any modal surface is open; the app behind it becomes inert. */
@@ -35,10 +38,14 @@ export class AppComponent {
   onKey(e: KeyboardEvent): void {
     const target = e.target as HTMLElement;
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
-    if (e.key === '/' && !typing) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (this.store.paletteOpen()) this.store.paletteOpen.set(false);
+      else if (!this.overlayOpen()) this.store.paletteOpen.set(true);
+    } else if (e.key === '/' && !typing && !this.overlayOpen()) {
       e.preventDefault();
       this.search()?.nativeElement.focus();
-    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing && !e.shiftKey) {
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing && !e.shiftKey && !this.overlayOpen()) {
       e.preventDefault();
       this.store.undo();
     }
@@ -65,13 +72,7 @@ export class AppComponent {
   }
 
   exportBoards(): void {
-    const blob = new Blob([this.store.exportJson()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'kanban-export.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadText('kanban-export.json', this.store.exportJson());
   }
 
   pickFile(): void {
