@@ -70,12 +70,14 @@ export function demoBoards(): Board[] {
       emoji: '🚀',
       createdAt: now,
       columns: [backlog, todo, doing, review, done],
+      archive: [],
     },
     {
       id: 'demo-personal',
       name: 'Personal',
       emoji: '🌱',
       createdAt: now + 1,
+      archive: [],
       columns: [
         { ...newColumn('Ideas', COLUMN_COLORS[3]), cards: [card('Learn to bake sourdough', 'low')] },
         { ...newColumn('This week', COLUMN_COLORS[0]), cards: [card('Book dentist', 'medium', [], { due: inDays(3) })] },

@@ -81,4 +81,58 @@ describe('BoardStore', () => {
     expect(out[0].columns[0].cards[0].priority).toBe('medium');
     expect(out[0].columns[0].cards[0].due).toBeNull();
   });
+
+  describe('archive', () => {
+    it('archives a card, remembers its column and restores it there', () => {
+      const col = cols()[1];
+      const card = col.cards[0];
+      store.archiveCard(card.id);
+      expect(cols()[1].cards.some((c) => c.id === card.id)).toBeFalse();
+      expect(store.active().archive[0]).toEqual(jasmine.objectContaining({ columnId: col.id, columnName: col.name }));
+      store.restoreArchived(card.id);
+      expect(cols()[1].cards.at(-1)!.id).toBe(card.id);
+      expect(store.active().archive.length).toBe(0);
+    });
+
+    it('restores to the first column when the original column is gone', () => {
+      const col = cols()[1];
+      const card = col.cards[0];
+      store.archiveCard(card.id);
+      store.deleteColumn(col.id);
+      store.restoreArchived(card.id);
+      expect(cols()[0].cards.some((c) => c.id === card.id)).toBeTrue();
+    });
+
+    it('archives a whole column and can undo it', () => {
+      const done = cols().at(-1)!;
+      const n = done.cards.length;
+      store.archiveColumn(done.id);
+      expect(cols().at(-1)!.cards.length).toBe(0);
+      expect(store.active().archive.length).toBe(n);
+      store.undo();
+      expect(cols().at(-1)!.cards.length).toBe(n);
+    });
+
+    it('deletes archived cards permanently', () => {
+      const card = cols()[0].cards[0];
+      store.archiveCard(card.id);
+      store.deleteArchived(card.id);
+      expect(store.active().archive.length).toBe(0);
+      expect(cols().flatMap((c) => c.cards).some((c) => c.id === card.id)).toBeFalse();
+    });
+
+    it('keeps archived cards out of the board stats', () => {
+      const before = store.stats().total;
+      store.archiveCard(cols()[0].cards[0].id);
+      expect(store.stats().total).toBe(before - 1);
+    });
+
+    it('sanitizes imported archives', () => {
+      const out = sanitizeBoards([{ name: 'B', columns: [], archive: [{ card: { title: 'Old', priority: 'nope' }, columnName: 5 }, 'junk'] }])!;
+      expect(out[0].archive.length).toBe(1);
+      expect(out[0].archive[0].card.priority).toBe('medium');
+      expect(out[0].archive[0].columnName).toBe('');
+      expect(sanitizeBoards([{ name: 'B', columns: [] }])![0].archive).toEqual([]);
+    });
+  });
 });

@@ -20,6 +20,9 @@ const PATHS: Record<string, string[]> = {
   layout: ['M4 4h6v16H4zM14 4h6v9h-6z'],
   sparkle: ['M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z'],
   alert: ['M12 3l10 18H2z', 'M12 10v5M12 18h.01'],
+  archive: ['M3 4h18v4H3z', 'M5 8v12h14V8', 'M10 12h4'],
+  command: ['M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z'],
+  arrow: ['M5 12h14M13 6l6 6-6 6'],
   refresh: ['M21 12a9 9 0 1 1-3-6.7L21 8', 'M21 3v5h-5'],
 };
 

@@ -55,7 +55,7 @@ describe('Board interactions', () => {
     it('discards edits on cancel', async () => {
       await open('Ship the public launch page');
       await type(q<HTMLInputElement>('.dialog-title'), 'Should not stick');
-      q<HTMLButtonElement>('.dialog-foot .btn.ghost').click();
+      qa('.dialog-foot .btn.ghost').find((b) => b.textContent!.trim() === 'Cancel')!.click();
       await settle();
       expect(columns().flatMap((c) => c.cards).some((c) => c.title === 'Should not stick')).toBeFalse();
     });
@@ -205,6 +205,39 @@ describe('Board interactions', () => {
       card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
       await settle();
       expect(q('.dialog')).toBeTruthy();
+    });
+  });
+
+  describe('archive panel', () => {
+    it('archives from a card, lists it in the panel and restores it', async () => {
+      const title = columns()[0].cards[0].title;
+      qa('.card')[0].querySelector<HTMLButtonElement>('[aria-label="Archive card"]')!.click();
+      fixture.detectChanges();
+      expect(columns()[0].cards.some((c) => c.title === title)).toBeFalse();
+
+      q<HTMLButtonElement>('.archive-btn').click();
+      fixture.detectChanges();
+      expect(q('.drawer')).toBeTruthy();
+      expect(q('.app').hasAttribute('inert')).toBeTrue();
+      expect(q('.archive-title').textContent).toContain(title);
+
+      q<HTMLButtonElement>('.archive-item .btn').click();
+      fixture.detectChanges();
+      expect(columns()[0].cards.some((c) => c.title === title)).toBeTrue();
+      expect(q('.drawer-empty')).toBeTruthy();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      expect(q('.drawer')).toBeNull();
+    });
+
+    it('archives all cards in a column from the column menu', async () => {
+      const last = qa('.column-head .icon-btn').length - 1;
+      qa('.column-head .icon-btn')[last].click();
+      fixture.detectChanges();
+      qa('.menu-item').find((b) => b.textContent!.includes('Archive all cards'))!.click();
+      fixture.detectChanges();
+      expect(columns().at(-1)!.cards.length).toBe(0);
     });
   });
 });

@@ -43,6 +43,11 @@
                           [attr.aria-label]="'Color ' + c" (click)="store.updateColumn(lane.column.id, { color: c })"></button>
                 }
               </div>
+              @if (lane.column.cards.length) {
+                <button type="button" class="menu-item" (click)="store.archiveColumn(lane.column.id); menuFor.set(null)">
+                  <app-icon name="archive" /> Archive all cards
+                </button>
+              }
               <button type="button" class="menu-item danger" (click)="store.deleteColumn(lane.column.id); menuFor.set(null)">
                 <app-icon name="trash" /> Delete column
               </button>
@@ -86,6 +91,10 @@
                 <button class="icon-btn tiny" type="button" aria-label="Duplicate card" title="Duplicate"
                         (click)="$event.stopPropagation(); store.duplicateCard(card.id)">
                   <app-icon name="copy" [size]="13" />
+                </button>
+                <button class="icon-btn tiny" type="button" aria-label="Archive card" title="Archive"
+                        (click)="$event.stopPropagation(); store.archiveCard(card.id)">
+                  <app-icon name="archive" [size]="13" />
                 </button>
                 <button class="icon-btn tiny danger" type="button" aria-label="Delete card" title="Delete"
                         (click)="$event.stopPropagation(); store.deleteCard(card.id)">

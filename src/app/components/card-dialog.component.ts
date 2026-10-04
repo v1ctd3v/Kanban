@@ -90,6 +90,10 @@ export class CardDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.close();
   }
 
+  archive(): void {
+    this.store.archiveCard(this.card().id);
+  }
+
   remove(): void {
     this.store.deleteCard(this.card().id);
   }

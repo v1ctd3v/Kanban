@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PRIORITIES } from './models/kanban.model';
 import { BoardComponent } from './components/board.component';
+import { ArchivePanelComponent } from './components/archive-panel.component';
 import { CardDialogComponent } from './components/card-dialog.component';
 import { IconComponent } from './components/icon.component';
 import { BoardStore } from './services/board.store';
@@ -11,7 +12,7 @@ import { ToastService } from './services/toast.service';
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BoardComponent, CardDialogComponent, IconComponent],
+  imports: [FormsModule, BoardComponent, CardDialogComponent, ArchivePanelComponent, IconComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent {
@@ -23,6 +24,8 @@ export class AppComponent {
   readonly priorities = PRIORITIES;
   readonly sidebarOpen = signal(window.innerWidth > 900);
   readonly addingBoard = signal(false);
+  /** Any modal surface is open; the app behind it becomes inert. */
+  readonly overlayOpen = computed(() => !!this.store.editing() || this.store.archiveOpen() || this.store.paletteOpen());
   boardDraft = '';
 
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
