@@ -23,6 +23,7 @@ describe('Board interactions', () => {
 
   beforeEach(async () => {
     localStorage.clear();
+    history.replaceState(null, '', location.pathname + location.search);
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     fixture = TestBed.createComponent(AppComponent);
     el = fixture.nativeElement;
@@ -322,6 +323,56 @@ describe('Board interactions', () => {
       await openPalette();
       await typeQuery('zzzz');
       expect(q('.palette-empty')).toBeTruthy();
+    });
+  });
+
+  describe('card links', () => {
+    const popTo = async (hash: string) => {
+      history.replaceState(null, '', hash);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      await settle();
+    };
+
+    it('puts the open card in the URL and removes it when closed', async () => {
+      const board = store.active();
+      const card = board.columns[0].cards[0];
+      qa('.card')[0].click();
+      await settle();
+      expect(location.hash).toBe(`#/board/${board.id}/card/${card.id}`);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await settle();
+      await new Promise((r) => setTimeout(r, 50)); // history.back() is async
+      expect(location.hash).toBe(`#/board/${board.id}`);
+    });
+
+    it('opens the card a link points to, even on another board', async () => {
+      const personal = store.boards().find((b) => b.name === 'Personal')!;
+      const card = personal.columns[0].cards[0];
+      await popTo(`#/board/${personal.id}/card/${card.id}`);
+      expect(store.active().id).toBe(personal.id);
+      expect(q<HTMLInputElement>('.dialog-title').value).toBe(card.title);
+    });
+
+    it('closes the editor when navigating back to the board URL', async () => {
+      const board = store.active();
+      await popTo(`#/board/${board.id}/card/${board.columns[0].cards[0].id}`);
+      expect(q('.dialog')).toBeTruthy();
+      await popTo(`#/board/${board.id}`);
+      expect(q('.dialog')).toBeNull();
+    });
+
+    it('ignores links to boards or cards that do not exist', async () => {
+      const active = store.active().id;
+      await popTo('#/board/nope/card/nada');
+      expect(store.active().id).toBe(active);
+      await popTo(`#/board/${active}/card/missing`);
+      expect(q('.dialog')).toBeNull();
+      await popTo('#/board/<script>');
+      expect(store.active().id).toBe(active);
+    });
+
+    it('names the tab after the board', async () => {
+      expect(document.title).toBe(`${store.active().name} · Kanban`);
     });
   });
 });

@@ -4,6 +4,7 @@ import { AppComponent } from './app.component';
 describe('AppComponent', () => {
   beforeEach(() => {
     localStorage.clear();
+    history.replaceState(null, '', location.pathname + location.search);
     return TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
   });
 

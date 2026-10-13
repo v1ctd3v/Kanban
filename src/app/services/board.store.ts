@@ -6,6 +6,7 @@ import { demoBoards } from './seed';
 import { ToastService } from './toast.service';
 
 const STORAGE_KEY = 'kanban.v2';
+const ACTIVE_KEY = 'kanban.active';
 const HISTORY_LIMIT = 50;
 const EMOJIS = ['📌', '🎯', '🧠', '🛠️', '📚', '🎨', '🌍', '⚡', '🔥', '🧪'];
 
@@ -82,7 +83,8 @@ export class BoardStore {
   private readonly toasts = inject(ToastService);
 
   readonly boards = signal<Board[]>(this.load());
-  readonly activeId = signal<string>(this.boards()[0].id);
+  /** Last board you had open, remembered across visits. */
+  readonly activeId = signal<string>(this.initialActive());
   readonly query = signal('');
   readonly priorityFilter = signal<Priority | null>(null);
   readonly editingCardId = signal<string | null>(null);
@@ -125,6 +127,24 @@ export class BoardStore {
         /* storage unavailable (private mode / quota) – keep working in memory */
       }
     });
+    effect(() => {
+      const id = this.active().id;
+      try {
+        localStorage.setItem(ACTIVE_KEY, id);
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
+  private initialActive(): string {
+    try {
+      const saved = localStorage.getItem(ACTIVE_KEY);
+      if (saved && this.boards().some((b) => b.id === saved)) return saved;
+    } catch {
+      /* ignore */
+    }
+    return this.boards()[0].id;
   }
 
   private load(): Board[] {

@@ -23,6 +23,7 @@ const PATHS: Record<string, string[]> = {
   archive: ['M3 4h18v4H3z', 'M5 8v12h14V8', 'M10 12h4'],
   command: ['M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z'],
   arrow: ['M5 12h14M13 6l6 6-6 6'],
+  link: ['M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1', 'M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1'],
   refresh: ['M21 12a9 9 0 1 1-3-6.7L21 8', 'M21 3v5h-5'],
 };
 

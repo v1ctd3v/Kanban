@@ -14,6 +14,9 @@ A fast, good-looking Kanban board built with Angular 21 (standalone components +
 - Keyboard friendly: `Enter` opens a card, `Alt`+arrow keys move it between and within columns (announced to screen readers), `/` focuses search
 - Archive finished cards (one at a time, or a whole column at once) and restore them from the archive panel
 - Undo for every change (`Ctrl/⌘+Z`, or the toast button)
+- Installable and works offline (service worker caches the app; a toast offers to reload when a new version is deployed)
+- Card links: the open card is in the URL (`#/board/<id>/card/<id>`), so Back closes it, refresh keeps it, and **Copy link** in the editor shares it. Links work in the browser that holds the data, since boards are stored locally
+- Remembers the board you last had open
 - Auto-saved to `localStorage`; JSON import/export (imports are validated and sanitized)
 
 ## Development

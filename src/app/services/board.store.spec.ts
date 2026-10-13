@@ -135,4 +135,13 @@ describe('BoardStore', () => {
       expect(sanitizeBoards([{ name: 'B', columns: [] }])![0].archive).toEqual([]);
     });
   });
+
+  it('remembers the last open board across visits', () => {
+    const personal = store.boards().find((b) => b.name === 'Personal')!;
+    store.selectBoard(personal.id);
+    TestBed.tick();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    expect(TestBed.inject(BoardStore).active().id).toBe(personal.id);
+  });
 });

@@ -2,6 +2,8 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef
 import { FormsModule } from '@angular/forms';
 import { Card, Column, labelHue, PRIORITIES, uid } from '../models/kanban.model';
 import { BoardStore } from '../services/board.store';
+import { ToastService } from '../services/toast.service';
+import { UrlStateService } from '../services/url-state.service';
 import { IconComponent } from './icon.component';
 
 @Component({
@@ -14,6 +16,7 @@ export class CardDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly opener = document.activeElement as HTMLElement | null;
   readonly store = inject(BoardStore);
+  private readonly toasts = inject(ToastService);
   readonly card = input.required<Card>();
   readonly column = input.required<Column>();
 
@@ -88,6 +91,16 @@ export class CardDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     const d = this.draft();
     if (d) this.store.saveCard(d, this.columnId());
     this.close();
+  }
+
+  async copyLink(): Promise<void> {
+    const url = UrlStateService.linkTo(this.store.active().id, this.card().id);
+    try {
+      await navigator.clipboard.writeText(url);
+      this.toasts.show('Link copied');
+    } catch {
+      this.toasts.show('Could not copy the link');
+    }
   }
 
   archive(): void {
