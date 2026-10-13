@@ -1,4 +1,4 @@
-<div class="app" [class.sidebar-closed]="!sidebarOpen()" [attr.inert]="store.editing() ? '' : null">
+<div class="app" [class.sidebar-closed]="!sidebarOpen()" [attr.inert]="overlayOpen() ? '' : null">
   <aside class="sidebar" aria-label="Sidebar">
     <div class="brand">
       <span class="brand-name">Kanban</span>
@@ -59,6 +59,9 @@
         <kbd>/</kbd>
       </label>
 
+      <button class="cmdk-btn" type="button" aria-label="Command menu" aria-keyshortcuts="Control+K Meta+K" (click)="store.paletteOpen.set(true)">
+        <kbd>{{ modKey }}</kbd><kbd>K</kbd>
+      </button>
       <button class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" [disabled]="!store.undoDepth()"
               (click)="store.undo()">
         <app-icon name="undo" />
@@ -81,12 +84,18 @@
         </p>
       </div>
 
+      <div class="board-actions">
       <div class="chips" role="group" aria-label="Filter by priority">
         @for (p of priorities; track p) {
           <button type="button" class="chip" [attr.data-priority]="p" [class.on]="store.priorityFilter() === p"
                   [attr.aria-pressed]="store.priorityFilter() === p"
                   (click)="togglePriority(p)"><span class="prio" [attr.data-priority]="p" aria-hidden="true"><i></i><i></i><i></i></span>{{ p }}</button>
         }
+      </div>
+      <button class="btn ghost sm archive-btn" type="button" (click)="store.archiveOpen.set(true)">
+        <app-icon name="archive" [size]="14" /> Archive
+        @if (store.active().archive.length) { <span class="pill">{{ store.active().archive.length }}</span> }
+      </button>
       </div>
     </section>
 
@@ -96,6 +105,14 @@
 
 @if (store.editing(); as ed) {
   <app-card-dialog [card]="ed.card" [column]="ed.column" />
+}
+
+@if (store.archiveOpen()) {
+  <app-archive-panel />
+}
+
+@if (store.paletteOpen()) {
+  <app-command-palette (exportRequested)="exportBoards()" />
 }
 
 <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ toasts.announcement() }}</div>

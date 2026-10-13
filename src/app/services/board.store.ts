@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import {
-  Board, Card, ChecklistItem, COLUMN_COLORS, Column, newCard, newColumn, PRIORITIES, Priority, uid,
+  ArchivedCard, Board, Card, ChecklistItem, COLUMN_COLORS, Column, newCard, newColumn, PRIORITIES, Priority, uid,
 } from '../models/kanban.model';
 import { demoBoards } from './seed';
 import { ToastService } from './toast.service';
@@ -10,6 +10,38 @@ const HISTORY_LIMIT = 50;
 const EMOJIS = ['📌', '🎯', '🧠', '🛠️', '📚', '🎨', '🌍', '⚡', '🔥', '🧪'];
 
 const str = (v: unknown, max: number): string => (typeof v === 'string' ? v.slice(0, max) : '');
+
+function sanitizeCard(k: any): Card | null {
+  if (!k || typeof k !== 'object') return null;
+  const checklist: ChecklistItem[] = (Array.isArray(k.checklist) ? k.checklist : [])
+    .slice(0, 100)
+    .map((i: ChecklistItem) => ({ id: str(i?.id, 20) || uid(), text: str(i?.text, 200), done: !!i?.done }));
+  return {
+    id: str(k.id, 20) || uid(),
+    title: str(k.title, 200) || 'Untitled',
+    description: str(k.description, 5000),
+    priority: PRIORITIES.includes(k.priority) ? k.priority : 'medium',
+    labels: (Array.isArray(k.labels) ? k.labels : []).filter((l: unknown) => typeof l === 'string').slice(0, 10).map((l: string) => l.slice(0, 24)),
+    due: typeof k.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k.due) ? k.due : null,
+    checklist,
+    createdAt: typeof k.createdAt === 'number' ? k.createdAt : Date.now(),
+  };
+}
+
+function sanitizeArchive(input: unknown): ArchivedCard[] {
+  const out: ArchivedCard[] = [];
+  for (const a of Array.isArray(input) ? input.slice(0, 500) : []) {
+    const card = a && typeof a === 'object' ? sanitizeCard((a as ArchivedCard).card) : null;
+    if (!card) continue;
+    out.push({
+      card,
+      columnId: str((a as ArchivedCard).columnId, 20),
+      columnName: str((a as ArchivedCard).columnName, 60),
+      archivedAt: typeof (a as ArchivedCard).archivedAt === 'number' ? (a as ArchivedCard).archivedAt : Date.now(),
+    });
+  }
+  return out;
+}
 
 /** Validates untrusted JSON (localStorage / imported files) and rebuilds clean objects. */
 export function sanitizeBoards(input: unknown): Board[] | null {
@@ -22,20 +54,8 @@ export function sanitizeBoards(input: unknown): Board[] | null {
       if (!c || typeof c !== 'object') continue;
       const cards: Card[] = [];
       for (const k of Array.isArray(c.cards) ? c.cards.slice(0, 1000) : []) {
-        if (!k || typeof k !== 'object') continue;
-        const checklist: ChecklistItem[] = (Array.isArray(k.checklist) ? k.checklist : [])
-          .slice(0, 100)
-          .map((i: ChecklistItem) => ({ id: str(i?.id, 20) || uid(), text: str(i?.text, 200), done: !!i?.done }));
-        cards.push({
-          id: str(k.id, 20) || uid(),
-          title: str(k.title, 200) || 'Untitled',
-          description: str(k.description, 5000),
-          priority: PRIORITIES.includes(k.priority) ? k.priority : 'medium',
-          labels: (Array.isArray(k.labels) ? k.labels : []).filter((l: unknown) => typeof l === 'string').slice(0, 10).map((l: string) => l.slice(0, 24)),
-          due: typeof k.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(k.due) ? k.due : null,
-          checklist,
-          createdAt: typeof k.createdAt === 'number' ? k.createdAt : Date.now(),
-        });
+        const card = sanitizeCard(k);
+        if (card) cards.push(card);
       }
       columns.push({
         id: str(c.id, 20) || uid(),
@@ -51,6 +71,7 @@ export function sanitizeBoards(input: unknown): Board[] | null {
       emoji: str((b as Board).emoji, 8) || '📌',
       createdAt: typeof (b as Board).createdAt === 'number' ? (b as Board).createdAt : Date.now(),
       columns,
+      archive: sanitizeArchive((b as Board).archive),
     });
   }
   return boards.length ? boards : null;
@@ -65,6 +86,8 @@ export class BoardStore {
   readonly query = signal('');
   readonly priorityFilter = signal<Priority | null>(null);
   readonly editingCardId = signal<string | null>(null);
+  readonly archiveOpen = signal(false);
+  readonly paletteOpen = signal(false);
 
   private history: Board[][] = [];
   readonly undoDepth = signal(0);
@@ -165,6 +188,7 @@ export class BoardStore {
       emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
       createdAt: Date.now(),
       columns: [newColumn('To do', COLUMN_COLORS[0]), newColumn('Doing', COLUMN_COLORS[1]), newColumn('Done', COLUMN_COLORS[2])],
+      archive: [],
     };
     this.commit([...this.boards(), board]);
     this.selectBoard(board.id);
@@ -221,13 +245,16 @@ export class BoardStore {
   }
 
   // ---------- cards ----------
-  addCard(columnId: string, title: string): void {
+  /** Adds a card and returns its id (null if the title was blank). */
+  addCard(columnId: string, title: string): string | null {
     const clean = title.trim().slice(0, 200);
-    if (!clean) return;
+    if (!clean) return null;
+    const card = newCard(clean);
     this.mutateActive((b) => ({
       ...b,
-      columns: b.columns.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, newCard(clean)] } : c)),
+      columns: b.columns.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, card] } : c)),
     }));
+    return card.id;
   }
 
   moveCard(fromCol: string, toCol: string, from: number, to: number): void {
@@ -272,6 +299,62 @@ export class BoardStore {
     }));
     if (this.editingCardId() === id) this.editingCardId.set(null);
     this.toasts.show('Card deleted', { label: 'Undo', run: () => this.undo() });
+  }
+
+  // ---------- archive ----------
+  archiveCard(id: string): void {
+    const column = this.active().columns.find((c) => c.cards.some((k) => k.id === id));
+    if (!column) return;
+    this.archiveCards(column.id, [id]);
+    if (this.editingCardId() === id) this.editingCardId.set(null);
+    this.toasts.show('Card archived', { label: 'Undo', run: () => this.undo() });
+  }
+
+  /** Archives every card in a column ("clear done"). */
+  archiveColumn(columnId: string): void {
+    const column = this.active().columns.find((c) => c.id === columnId);
+    if (!column?.cards.length) return;
+    const n = column.cards.length;
+    this.archiveCards(columnId, column.cards.map((k) => k.id));
+    this.toasts.show(`Archived ${n} card${n > 1 ? 's' : ''}`, { label: 'Undo', run: () => this.undo() });
+  }
+
+  private archiveCards(columnId: string, ids: string[]): void {
+    const now = Date.now();
+    this.mutateActive((b) => {
+      const column = b.columns.find((c) => c.id === columnId)!;
+      const moved = column.cards
+        .filter((k) => ids.includes(k.id))
+        .map((card) => ({ card, columnId, columnName: column.name, archivedAt: now }));
+      return {
+        ...b,
+        columns: b.columns.map((c) => (c.id === columnId ? { ...c, cards: c.cards.filter((k) => !ids.includes(k.id)) } : c)),
+        archive: [...moved.reverse(), ...b.archive],
+      };
+    });
+  }
+
+  /** Puts an archived card back at the end of its original column (or the first column if that's gone). */
+  restoreArchived(cardId: string): void {
+    const board = this.active();
+    const entry = board.archive.find((a) => a.card.id === cardId);
+    if (!entry) return;
+    const target = board.columns.find((c) => c.id === entry.columnId) ?? board.columns[0];
+    if (!target) {
+      this.toasts.show('Add a column first');
+      return;
+    }
+    this.mutateActive((b) => ({
+      ...b,
+      archive: b.archive.filter((a) => a.card.id !== cardId),
+      columns: b.columns.map((c) => (c.id === target.id ? { ...c, cards: [...c.cards, entry.card] } : c)),
+    }));
+    this.toasts.show(`Restored to ${target.name}`, { label: 'Undo', run: () => this.undo() });
+  }
+
+  deleteArchived(cardId: string): void {
+    this.mutateActive((b) => ({ ...b, archive: b.archive.filter((a) => a.card.id !== cardId) }));
+    this.toasts.show('Deleted permanently', { label: 'Undo', run: () => this.undo() });
   }
 
   duplicateCard(id: string): void {
