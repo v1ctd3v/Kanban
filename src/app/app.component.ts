@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
 import { FormsModule } from '@angular/forms';
 import { PRIORITIES } from './models/kanban.model';
 import { BoardComponent } from './components/board.component';
@@ -10,6 +11,7 @@ import { BoardStore } from './services/board.store';
 import { downloadText } from './services/download';
 import { ThemeService } from './services/theme.service';
 import { ToastService } from './services/toast.service';
+import { UrlStateService } from './services/url-state.service';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +24,8 @@ export class AppComponent {
   readonly store = inject(BoardStore);
   readonly theme = inject(ThemeService);
   readonly toasts = inject(ToastService);
+  private readonly urlState = inject(UrlStateService);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
 
   readonly priorities = PRIORITIES;
   readonly modKey = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
@@ -30,6 +34,17 @@ export class AppComponent {
   /** Any modal surface is open; the app behind it becomes inert. */
   readonly overlayOpen = computed(() => !!this.store.editing() || this.store.archiveOpen() || this.store.paletteOpen());
   boardDraft = '';
+
+  constructor() {
+    // A new version was deployed and downloaded in the background: offer to switch.
+    if (this.swUpdate?.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe((e) => {
+        if (e.type === 'VERSION_READY') {
+          this.toasts.show('A new version is ready', { label: 'Reload', run: () => location.reload() }, 30_000);
+        }
+      });
+    }
+  }
 
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('file');

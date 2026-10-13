@@ -5,6 +5,7 @@
         <h2 id="dialog-heading" class="sr-only">Edit card</h2>
         <input class="dialog-title" [ngModel]="d.title" (ngModelChange)="patch({ title: $event })" maxlength="200"
                placeholder="Card title" aria-label="Title" />
+        <button class="icon-btn" type="button" aria-label="Copy link to card" title="Copy link" (click)="copyLink()"><app-icon name="link" /></button>
         <button class="icon-btn" type="button" aria-label="Close" (click)="close()"><app-icon name="x" /></button>
       </header>
 
