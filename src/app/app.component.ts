@@ -3,6 +3,7 @@ import { SwUpdate } from '@angular/service-worker';
 import { FormsModule } from '@angular/forms';
 import { PRIORITIES } from './models/kanban.model';
 import { BoardComponent } from './components/board.component';
+import { AppearanceMenuComponent } from './components/appearance-menu.component';
 import { ArchivePanelComponent } from './components/archive-panel.component';
 import { CardDialogComponent } from './components/card-dialog.component';
 import { CommandPaletteComponent } from './components/command-palette.component';
@@ -16,7 +17,7 @@ import { UrlStateService } from './services/url-state.service';
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, BoardComponent, CardDialogComponent, ArchivePanelComponent, CommandPaletteComponent, IconComponent],
+  imports: [FormsModule, BoardComponent, CardDialogComponent, ArchivePanelComponent, CommandPaletteComponent, AppearanceMenuComponent, IconComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent {

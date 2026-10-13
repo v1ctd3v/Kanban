@@ -75,7 +75,7 @@
                 <p class="card-desc">{{ card.description }}</p>
               }
               <footer class="card-meta">
-                <span class="prio" [attr.data-priority]="card.priority" [title]="card.priority + ' priority'" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="prio-tag" [attr.data-priority]="card.priority" aria-hidden="true"><span class="prio" [attr.data-priority]="card.priority" [title]="card.priority + ' priority'"><i></i><i></i><i></i></span><span class="prio-word">{{ card.priority }}</span></span>
                 @if (card.checklist.length) {
                   <span class="meta" [title]="done(card) + ' of ' + card.checklist.length + ' done'">
                     <span class="mini-meter" aria-hidden="true"><span [style.width.%]="(done(card) / card.checklist.length) * 100"></span></span>

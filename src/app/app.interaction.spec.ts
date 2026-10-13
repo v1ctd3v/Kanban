@@ -375,4 +375,39 @@ describe('Board interactions', () => {
       expect(document.title).toBe(`${store.active().name} · Kanban`);
     });
   });
+
+  describe('appearance menu', () => {
+    const trigger = () => q<HTMLButtonElement>('[aria-label="Appearance"]');
+
+    it('opens, switches style, accent, mode and density, and closes with Escape', async () => {
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+      trigger().click();
+      await settle();
+      expect(trigger().getAttribute('aria-expanded')).toBe('true');
+
+      const pick = async (name: string, value: string) => {
+        const input = q<HTMLInputElement>(`input[name="${name}"][value="${value}"]`);
+        input.click();
+        await settle();
+      };
+      await pick('ui-style', 'editorial');
+      await pick('ui-accent', 'violet');
+      await pick('ui-mode', 'dark');
+      await pick('ui-density', 'compact');
+      const d = document.documentElement.dataset;
+      expect([d['style'], d['accent'], d['theme'], d['density']]).toEqual(['editorial', 'violet', 'dark', 'compact']);
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await settle();
+      expect(q('.appearance')).toBeNull();
+    });
+
+    it('closes when clicking elsewhere', async () => {
+      trigger().click();
+      await settle();
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      await settle();
+      expect(q('.appearance')).toBeNull();
+    });
+  });
 });

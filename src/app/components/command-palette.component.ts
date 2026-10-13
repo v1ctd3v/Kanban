@@ -81,6 +81,11 @@ export class CommandPaletteComponent implements AfterViewInit, OnDestroy {
         id: 'theme', group: 'Actions', icon: this.theme.theme() === 'dark' ? 'sun' : 'moon',
         label: `Switch to ${this.theme.theme() === 'dark' ? 'light' : 'dark'} theme`, run: () => this.theme.toggle(),
       },
+      {
+        id: 'style', group: 'Actions', icon: 'palette',
+        label: `Switch to ${this.theme.appearance().style === 'functional' ? 'editorial' : 'functional'} style`,
+        run: () => this.theme.set({ style: this.theme.appearance().style === 'functional' ? 'editorial' : 'functional' }),
+      },
       { id: 'archive', group: 'Actions', icon: 'archive', label: 'Open archive', hint: `${board.archive.length}`, run: () => this.store.archiveOpen.set(true) },
       { id: 'export', group: 'Actions', icon: 'download', label: 'Export boards as JSON', run: () => this.exportRequested.emit() },
     );
