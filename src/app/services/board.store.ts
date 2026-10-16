@@ -266,10 +266,10 @@ export class BoardStore {
 
   // ---------- cards ----------
   /** Adds a card and returns its id (null if the title was blank). */
-  addCard(columnId: string, title: string): string | null {
+  addCard(columnId: string, title: string, extra: Partial<Pick<Card, 'priority' | 'labels' | 'due'>> = {}): string | null {
     const clean = title.trim().slice(0, 200);
     if (!clean) return null;
-    const card = newCard(clean);
+    const card = { ...newCard(clean), ...extra };
     this.mutateActive((b) => ({
       ...b,
       columns: b.columns.map((c) => (c.id === columnId ? { ...c, cards: [...c.cards, card] } : c)),

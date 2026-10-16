@@ -109,9 +109,21 @@
 
         @if (addingTo() === lane.column.id) {
           <form class="composer" (submit)="submitCard(lane.column.id, $event)">
-            <textarea name="draft" [(ngModel)]="draft" rows="2" maxlength="200" autofocus
-                      placeholder="What needs doing?" (keydown.enter)="submitCard(lane.column.id, $event)"
+            <textarea name="draft" [ngModel]="draft" (ngModelChange)="onDraft($event)" rows="2" maxlength="300" autofocus
+                      placeholder="What needs doing?" [attr.aria-label]="'New card in ' + lane.column.name" aria-describedby="quick-add-hint" (keydown.enter)="submitCard(lane.column.id, $event)"
                       (keydown.escape)="addingTo.set(null)"></textarea>
+            <div class="quick-preview" id="quick-add-hint" aria-live="polite">
+              @if (preview(); as p) {
+                <span class="qp-title">{{ p.title }}</span>
+                @if (p.due) { <span class="qp-chip"><app-icon name="calendar" [size]="12" /> {{ dueText(p.due) }}</span> }
+                @if (p.priority) {
+                  <span class="qp-chip prio-tag" [attr.data-priority]="p.priority"><span class="prio" [attr.data-priority]="p.priority" aria-hidden="true"><i></i><i></i><i></i></span>{{ p.priority }}</span>
+                }
+                @for (l of p.labels; track l) { <span class="qp-chip">#{{ l }}</span> }
+              } @else {
+                <span class="qp-hint">Tip: <kbd>!high</kbd> <kbd>#label</kbd> <kbd>fri</kbd> <kbd>next week</kbd> <kbd>oct 20</kbd></span>
+              }
+            </div>
             <div class="composer-actions">
               <button class="btn primary sm" type="submit">Add card</button>
               <button class="btn ghost sm" type="button" (click)="addingTo.set(null)">Done</button>

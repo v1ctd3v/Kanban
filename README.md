@@ -7,6 +7,7 @@ A fast, good-looking Kanban board built with Angular 21 (standalone components +
 - Multiple boards, with columns you can add, rename (double-click), recolor, reorder and delete
 - Drag and drop for cards and columns
 - Card editor with description, priority, labels, due date and a checklist with progress
+- Natural-language quick add: type `Book venue next fri !urgent #events` and the card gets its due date, priority and labels (live preview as you type). Works in the add-card box and the command palette. Understands `!low/!med/!high/!urgent`, `#label`, `today`, `tomorrow`, weekdays, `next week`, `next fri`, `in 3 days`, `oct 20`, `due …` and `@2026-10-20`
 - WIP limits per column, board progress meter, overdue counter
 - Command palette (`⌘K` / `Ctrl+K`): jump to any board or card, create cards and boards, switch theme, export
 - Search (`/`) and priority filters

@@ -272,7 +272,7 @@ describe('Board interactions', () => {
       const groups = () => qa('.palette-group').map((g) => g.textContent!.trim());
       expect(groups()).toEqual(['Actions', 'Boards']);
       await typeQuery('onboarding');
-      expect(groups()).toEqual(['Cards']);
+      expect(groups()).toEqual(['Cards', 'Create']);
       expect(q('.palette-option').textContent).toContain('Write onboarding emails');
     });
 
@@ -408,6 +408,54 @@ describe('Board interactions', () => {
       document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       await settle();
       expect(q('.appearance')).toBeNull();
+    });
+  });
+
+  describe('quick add', () => {
+    it('previews and applies priority, labels and due date from the composer', async () => {
+      qa('.add-card')[0].click();
+      await settle();
+      const box = q<HTMLTextAreaElement>('.composer textarea');
+      expect(q('.qp-hint')).toBeTruthy();
+      await type(box, 'Book venue tomorrow !high #events');
+      expect(q('.qp-title').textContent).toBe('Book venue');
+      expect(qa('.qp-chip').map((c) => c.textContent!.trim())).toEqual([jasmine.stringMatching(/\w/), 'high', '#events']);
+
+      box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', cancelable: true }));
+      await settle();
+      const card = columns()[0].cards.at(-1)!;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+      expect(card).toEqual(jasmine.objectContaining({ title: 'Book venue', priority: 'high', labels: ['events'], due: iso }));
+    });
+
+    it('creates a parsed card from the command palette', async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, cancelable: true }));
+      await settle();
+      const input = q<HTMLInputElement>('.palette-input input');
+      input.value = 'Renew domain !urgent #ops';
+      input.dispatchEvent(new Event('input'));
+      await settle();
+      const options = qa('.palette-option');
+      const create = options.at(-1)!;
+      expect(create.textContent).toContain('Create card “Renew domain”');
+      expect(create.textContent).toContain('urgent');
+      create.click();
+      fixture.detectChanges(); // not settle(): the confirmation toast keeps a timer pending
+      expect(columns()[0].cards.at(-1)).toEqual(jasmine.objectContaining({ title: 'Renew domain', priority: 'urgent', labels: ['ops'] }));
+    });
+
+    it('keeps search results ahead of the create option', async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, cancelable: true }));
+      await settle();
+      const input = q<HTMLInputElement>('.palette-input input');
+      input.value = 'onboarding';
+      input.dispatchEvent(new Event('input'));
+      await settle();
+      const labels = qa('.palette-option .palette-label').map((l) => l.textContent);
+      expect(labels[0]).toBe('Write onboarding emails');
+      expect(labels.at(-1)).toContain('Create card');
     });
   });
 });
