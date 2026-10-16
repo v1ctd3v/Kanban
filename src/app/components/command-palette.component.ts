@@ -1,11 +1,13 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, computed, ElementRef, inject, OnDestroy, output, signal, viewChild } from '@angular/core';
 import { BoardStore } from '../services/board.store';
 import { ThemeService } from '../services/theme.service';
+import { parseQuickAdd } from '../services/quick-add';
+import { ToastService } from '../services/toast.service';
 import { IconComponent } from './icon.component';
 
 interface Command {
   id: string;
-  group: 'Actions' | 'Boards' | 'Cards';
+  group: 'Actions' | 'Boards' | 'Cards' | 'Create';
   label: string;
   hint?: string;
   /** Extra text to match against (defaults to label + hint). */
@@ -32,6 +34,9 @@ const MAX_CARDS = 30;
                  (input)="onInput(input.value)" (keydown)="onKey($event)" />
           <kbd>esc</kbd>
         </div>
+        @if (noMatches()) {
+          <p class="palette-empty">No results for “{{ query() }}”</p>
+        }
         <div class="palette-list" id="palette-list" role="listbox" aria-label="Results">
           @for (group of groups(); track group.name) {
             <div role="group" [attr.aria-label]="group.name">
@@ -46,8 +51,6 @@ const MAX_CARDS = 30;
                 </div>
               }
             </div>
-          } @empty {
-            <p class="palette-empty">No results for “{{ query() }}”</p>
           }
         </div>
       </div>
@@ -57,6 +60,7 @@ const MAX_CARDS = 30;
 export class CommandPaletteComponent implements AfterViewInit, OnDestroy {
   private readonly store = inject(BoardStore);
   private readonly theme = inject(ThemeService);
+  private readonly toasts = inject(ToastService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly opener = document.activeElement as HTMLElement | null;
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('input');
@@ -80,6 +84,11 @@ export class CommandPaletteComponent implements AfterViewInit, OnDestroy {
       {
         id: 'theme', group: 'Actions', icon: this.theme.theme() === 'dark' ? 'sun' : 'moon',
         label: `Switch to ${this.theme.theme() === 'dark' ? 'light' : 'dark'} theme`, run: () => this.theme.toggle(),
+      },
+      {
+        id: 'style', group: 'Actions', icon: 'palette',
+        label: `Switch to ${this.theme.appearance().style === 'functional' ? 'editorial' : 'functional'} style`,
+        run: () => this.theme.set({ style: this.theme.appearance().style === 'functional' ? 'editorial' : 'functional' }),
       },
       { id: 'archive', group: 'Actions', icon: 'archive', label: 'Open archive', hint: `${board.archive.length}`, run: () => this.store.archiveOpen.set(true) },
       { id: 'export', group: 'Actions', icon: 'download', label: 'Export boards as JSON', run: () => this.exportRequested.emit() },
@@ -117,7 +126,9 @@ export class CommandPaletteComponent implements AfterViewInit, OnDestroy {
       return words.every((w) => text.includes(w));
     });
     const cards = hits.filter((c) => c.group === 'Cards').slice(0, MAX_CARDS);
-    return [...hits.filter((c) => c.group !== 'Cards'), ...cards];
+    // Always offer to create a card from what was typed, last so Enter still picks a match first.
+    const create = this.createCommand();
+    return [...hits.filter((c) => c.group !== 'Cards'), ...cards, ...(create ? [create] : [])];
   });
 
   readonly groups = computed(() => {
@@ -129,6 +140,34 @@ export class CommandPaletteComponent implements AfterViewInit, OnDestroy {
     });
     return out;
   });
+
+  /** "Create card …" from the query, parsed with quick add (priority, labels, due date). */
+  private createCommand(): Command | null {
+    const text = this.query().trim();
+    const first = this.store.active().columns[0];
+    if (text.length < 2 || !first) return null;
+    const p = parseQuickAdd(text);
+    const bits = [
+      p.due && new Date(p.due + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      p.priority,
+      ...p.labels.map((l) => '#' + l),
+    ].filter(Boolean);
+    return {
+      id: 'create-card', group: 'Create', icon: 'plus', label: `Create card “${p.title}”`,
+      hint: [`in ${first.name}`, ...bits].join(' · '), search: '',
+      run: () => {
+        const id = this.store.addCard(first.id, p.title, {
+          ...(p.priority && { priority: p.priority }),
+          ...(p.labels.length && { labels: p.labels }),
+          ...(p.due && { due: p.due }),
+        });
+        if (id) this.toasts.show(`Added to ${first.name}`, { label: 'Open', run: () => this.store.editingCardId.set(id) });
+      },
+    };
+  }
+
+  /** Nothing matched the query (only the "create card" option is left). */
+  readonly noMatches = computed(() => this.results().every((c) => c.id === 'create-card'));
 
   ngAfterViewInit(): void {
     this.input().nativeElement.focus();

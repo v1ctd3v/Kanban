@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ToastService } from '../services/toast.service';
 import { Card, COLUMN_COLORS, Column, dueState, formatDue, labelHue } from '../models/kanban.model';
 import { BoardStore } from '../services/board.store';
+import { parseQuickAdd, QuickAdd } from '../services/quick-add';
 import { IconComponent } from './icon.component';
 
 @Component({
@@ -24,6 +25,8 @@ export class BoardComponent {
   readonly renaming = signal<string | null>(null);
   readonly addingColumn = signal(false);
   draft = '';
+  /** What quick add understood from the draft, shown under the composer. */
+  readonly preview = signal<QuickAdd | null>(null);
   columnDraft = '';
 
   /** Columns with their cards after search / priority filtering. */
@@ -104,6 +107,16 @@ export class BoardComponent {
     this.store.moveColumn(event.previousIndex, event.currentIndex);
   }
 
+  onDraft(value: string): void {
+    this.draft = value;
+    const p = value.trim() ? parseQuickAdd(value) : null;
+    this.preview.set(p && (p.priority || p.labels.length || p.due) ? p : null);
+  }
+
+  dueText(iso: string): string {
+    return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
   startAdd(columnId: string): void {
     this.addingTo.set(columnId);
     this.draft = '';
@@ -111,8 +124,14 @@ export class BoardComponent {
 
   submitCard(columnId: string, event?: Event): void {
     event?.preventDefault();
-    this.store.addCard(columnId, this.draft);
+    const parsed = parseQuickAdd(this.draft);
+    this.store.addCard(columnId, parsed.title, {
+      ...(parsed.priority && { priority: parsed.priority }),
+      ...(parsed.labels.length && { labels: parsed.labels }),
+      ...(parsed.due && { due: parsed.due }),
+    });
     this.draft = '';
+    this.preview.set(null);
   }
 
   commitRename(column: Column, value: string): void {
