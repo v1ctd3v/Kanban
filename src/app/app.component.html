@@ -60,15 +60,13 @@
       </label>
 
       <button class="cmdk-btn" type="button" aria-label="Command menu" aria-keyshortcuts="Control+K Meta+K" (click)="store.paletteOpen.set(true)">
-        <kbd>{{ modKey }}</kbd><kbd>K</kbd>
+        <app-icon class="cmdk-icon" name="command" [size]="15" /><kbd>{{ modKey }}</kbd><kbd>K</kbd>
       </button>
       <button class="icon-btn" type="button" aria-label="Undo" title="Undo (Ctrl+Z)" [disabled]="!store.undoDepth()"
               (click)="store.undo()">
         <app-icon name="undo" />
       </button>
-      <button class="icon-btn" type="button" aria-label="Toggle theme" (click)="theme.toggle()">
-        <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
-      </button>
+      <app-appearance-menu />
     </header>
 
     <section class="board-header">
